@@ -1,0 +1,32 @@
+{
+  "name": "videofeed",
+  "version": "1.0.0",
+  "description": "Generate feed out of videos",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dineshdb/videofeed.git"
+  },
+  "keywords": [
+    "feed",
+    "video",
+    "rss",
+    "atom",
+    "m3u"
+  ],
+  "type": "module",
+  "author": "Dinesh Bhattarai",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dineshdb/videofeed/issues"
+  },
+  "homepage": "https://github.com/dineshdb/videofeed#readme",
+  "dependencies": {
+    "feed": "^4.1.0",
+    "toml": "^3.0.0",
+    "walkdir": "^0.4.1"
+  }
+}
