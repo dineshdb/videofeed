@@ -1,5 +1,3 @@
-import walk from "walkdir";
-import Feed from "feed";
 import { promises as fs } from "fs";
 import toml from "toml";
 import { basename, dirname, extname, join, relative } from "path";
@@ -12,51 +10,7 @@ const reverse = p =>
   new Promise((resolve, reject) => Promise.resolve(p).then(reject, resolve));
 Promise.any = arr => reverse(Promise.all(arr.map(reverse)));
 
-(async function() {
-  try {
-    let index = await loadIndex();
-    let paths = await walk.sync("./");
-    let videos = await Promise.all(
-      paths.filter(isVideo).map(async p => {
-        return await extractEpisodeInformation(p, index);
-      })
-    );
-
-    videos.map(video => {
-      let { url, thumbnail } = video;
-      url = join(index.videofeed.baseUrl, relative(".", url));
-      thumbnail = thumbnail
-        ? join(index.videofeed.baseUrl, relative(".", thumbnail))
-        : thumbnail;
-      return Object.assign(video, { link: url, image: thumbnail });
-    });
-
-    let feed = new Feed.Feed(
-      Object.assign(index.videofeed, {
-        updated: new Date(),
-        generator: "https://github.com/dineshdb/videofeed",
-        link: index.videofeed.baseUrl,
-        image: index.videofeed.baseUrl + "/favicon.png",
-        favicon: index.videofeed.baseUrl + "/favicon.png",
-        feedLinks: {
-          json: index.videofeed.baseUrl + "/feed.json"
-        }
-      })
-    );
-
-    videos.forEach(feed.addItem);
-    index.videofeed.categories.forEach(feed.addCategory);
-
-    await Promise.all([
-      fs.writeFile("feed.rss", feed.rss2()),
-      fs.writeFile("feed.json", feed.json1())
-    ]);
-  } catch (e) {
-    console.log(e);
-  }
-})();
-
-async function loadIndex() {
+export async function loadIndex() {
   let tomlString = await fs.readFile("videofeed.toml", "utf8");
   return Object.assign(
     {
@@ -74,13 +28,13 @@ async function loadIndex() {
   );
 }
 
-function isVideo(path) {
+export function isVideo(path) {
   const videoTypes = [".mkv", ".mp4", ".mov", ".webm", ".avi", ".flv", ".wmv"];
   let ext = path.substr(path.lastIndexOf("."));
   return videoTypes.includes(ext);
 }
 
-function generateThumbnail(episode, baseUrl, captureAt) {
+export function generateThumbnail(episode, baseUrl, captureAt) {
   let thumbnail = baseUrl + ".jpg";
   console.info("Generating thumbnail for ", episode.url);
   let cmd = `ffmpeg -i ${episode.url} -ss ${captureAt} -vframes 1 ${thumbnail}`;
@@ -88,7 +42,7 @@ function generateThumbnail(episode, baseUrl, captureAt) {
 }
 
 // For each video, identify it's subtitle, thumbnail and description file.
-async function extractEpisodeInformation(videoFile, index) {
+export async function extractEpisodeInformation(videoFile, index) {
   let dir = dirname(videoFile);
   let base = basename(videoFile);
   let ext = extname(videoFile);
@@ -121,17 +75,17 @@ async function extractEpisodeInformation(videoFile, index) {
   return Object.assign(episode, { thumbnail });
 }
 
-async function checkExists(file) {
+export async function checkExists(file) {
   await fs.stat(file);
   return file;
 }
 
-function getThumbnail(file) {
+export function getThumbnail(file) {
   const thumbnailTypes = [".png", ".jpg", ".jpeg",".webp"];
   return Promise.any(thumbnailTypes.map(ext => checkExists(file + ext)));
 }
 
-function titleCase(str) {
+export function titleCase(str) {
   return str
     .toLowerCase()
     .split(" ")

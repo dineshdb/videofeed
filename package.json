@@ -1,6 +1,6 @@
 {
   "name": "videofeed",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Generate feed out of videos",
   "main": "index.js",
   "scripts": {
@@ -24,6 +24,9 @@
     "url": "https://github.com/dineshdb/videofeed/issues"
   },
   "homepage": "https://github.com/dineshdb/videofeed#readme",
+  "bin" : {
+    "videofeed" : "./cli.js"
+  },
   "dependencies": {
     "feed": "^4.1.0",
     "toml": "^3.0.0",
