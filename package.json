@@ -24,12 +24,16 @@
     "url": "https://github.com/dineshdb/videofeed/issues"
   },
   "homepage": "https://github.com/dineshdb/videofeed#readme",
-  "bin" : {
-    "videofeed" : "./cli.js"
+  "bin": {
+    "videofeed": "./cli.js"
   },
   "dependencies": {
-    "feed": "^4.1.0",
+    "chalk": "^3.0.0",
+    "minio": "^7.0.13",
+    "node-mediainfo": "^1.0.3",
+    "terminal-link": "^2.1.1",
     "toml": "^3.0.0",
-    "walkdir": "^0.4.1"
+    "walkdir": "^0.4.1",
+    "xmlbuilder": "^13.0.2"
   }
 }

@@ -1,49 +1,44 @@
-#!/bin/env node
-import walk from "walkdir";
-import Feed from "feed";
-import { promises as fs } from "fs";
-import {join, relative } from "path";
-import {loadIndex, isVideo, extractEpisodeInformation} from "./index.js"
+import Index from "./src/index.js";
+import Mirror from "./src/mirror.js"
+import chalk from "chalk"
+import terminalLink from "terminal-link"
+const repo = ".";
+
 (async function() {
   try {
-    let index = await loadIndex();
-    let paths = await walk.sync("./");
-    let videos = await Promise.all(
-      paths.filter(isVideo).map(async p => {
-        return await extractEpisodeInformation(p, index);
-      })
-    );
+    let index = new Index(repo)
+    try{
+      await index.loadIndex()
+    } catch(e) {
+      console.log(chalk.red("Could not load index. Make sure index.toml exists in current folder."))
+    }
 
-    videos.map(video => {
-      let { url, thumbnail } = video;
-      url = join(index.videofeed.baseUrl, relative(".", url));
-      thumbnail = thumbnail
-        ? join(index.videofeed.baseUrl, relative(".", thumbnail))
-        : thumbnail;
-      return Object.assign(video, { link: url, image: thumbnail });
-    });
+    let items = await index.items()
+    let mirror = new Mirror(repo)
+    try{
+      await mirror.init()
+    } catch(e) {
+      console.error(chalk.red("Could not initialize repo."))
+    }
+ 
+    for (let episode of items){
+      try {
+        await mirror.addEpisode(episode)
+      } catch(e) {
+        console.error(chalk.red("Error adding episode to mirror", e))
+      }
+    }
 
-    let feed = new Feed.Feed(
-      Object.assign(index.videofeed, {
-        updated: new Date(),
-        generator: "https://github.com/dineshdb/videofeed",
-        link: index.videofeed.baseUrl,
-        image: index.videofeed.baseUrl + "/favicon.png",
-        favicon: index.videofeed.baseUrl + "/favicon.png",
-        feedLinks: {
-          json: index.videofeed.baseUrl + "/feed.json"
-        }
-      })
-    );
-
-    videos.forEach(feed.addItem);
-    index.videofeed.categories.forEach(feed.addCategory);
-
-    await Promise.all([
-      fs.writeFile("feed.rss", feed.rss2()),
-      fs.writeFile("feed.json", feed.json1())
-    ]);
+    let feed = await mirror.feed(index.config)
+    try{
+      await mirror.sync(feed, index.config)
+      console.info("Successfully synced all the files to server.")
+      console.log(chalk.blue(terminalLink("Please update the permission of the Cloud storage to make it public", `https://${index.config.remote.url}/${index.config.remote.bucket}`)))
+      } catch(e){
+      console.error(chalk.red("Error syncing files to server."))
+    }
   } catch (e) {
-    console.log(e);
+    console.error(chalk.red("One or more errors were found. Please see above."))
+    console.log(e)
   }
 })();
